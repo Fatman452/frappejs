@@ -19,9 +19,13 @@ module.exports = {
       // value = markdown.makeHtml(value || '');
     } else if (df.fieldtype === 'Date') {
       let dateFormat;
+      let dateFormatLocale = 'en'
       if (!frappe.SystemSettings) {
         dateFormat = 'yyyy-MM-dd';
       } else {
+        if (frappe.SystemSettings.dateFormatLocale){
+          dateFormatLocale = frappe.SystemSettings.dateFormatLocale
+        }
         dateFormat = frappe.SystemSettings.dateFormat;
       }
 
@@ -33,7 +37,7 @@ module.exports = {
         value = luxon.DateTime.fromJSDate(value);
       }
 
-      value = value.toFormat(dateFormat);
+      value = value.toFormat(dateFormat, {locale: dateFormatLocale});
       if (value === 'Invalid DateTime') {
         value = '';
       }
