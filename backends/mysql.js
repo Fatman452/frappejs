@@ -12,7 +12,7 @@ module.exports = class mysqlDatabase extends Database{
         this.password = password;
         this.host = host;
         this.init_typeMap();
-    }
+    } 
 
     connect(db_name) {
         if (db_name) {

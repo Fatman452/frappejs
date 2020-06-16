@@ -1,6 +1,6 @@
 const backends = {};
 backends.sqlite = require('frappejs/backends/sqlite');
-//backends.mysql = require('frappejs/backends/mysql');
+backends.mysql = require('frappejs/backends/mysql');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
