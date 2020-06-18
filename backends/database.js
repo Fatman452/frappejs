@@ -23,12 +23,14 @@ module.exports = class Database extends Observable {
   }
 
   async migrate() {
+    console.log('models', JSON.stringify(Object.keys(frappe.models))); 
     for (let doctype in frappe.models) {
       // check if controller module
       let meta = frappe.getMeta(doctype);
       let baseDoctype = meta.getBaseDocType();
       if (!meta.isSingle) {
         if (await this.tableExists(baseDoctype)) {
+          // continue;
           await this.alterTable(baseDoctype);
         } else {
           await this.createTable(baseDoctype);
@@ -79,8 +81,8 @@ module.exports = class Database extends Observable {
     return await this.runCreateTableQuery(tableName || doctype, fields);
   }
 
-  runCreateTableQuery(doctype, fields) {
-    return this.knex.schema.createTable(doctype, table => {
+  async runCreateTableQuery(doctype, fields) {
+    return this.knex.schema.createTable(doctype, (table) => {
       for (let field of fields) {
         this.buildColumnForTable(table, field);
       }
@@ -93,7 +95,7 @@ module.exports = class Database extends Observable {
     let newForeignKeys = await this.getNewForeignKeys(doctype);
 
     return this.knex.schema
-      .table(doctype, table => {
+      .table(doctype, (table) => {
         if (diff.added.length) {
           for (let field of diff.added) {
             this.buildColumnForTable(table, field);
@@ -111,9 +113,13 @@ module.exports = class Database extends Observable {
       });
   }
 
-  buildColumnForTable(table, field) {
+  async buildColumnForTable(table, field) {
     let columnType = this.getColumnType(field);
-    let column = table[columnType](field.fieldname);
+    let column; 
+    if (columnType === "image") {
+      column = table.text(field.fieldname, 'longtext');
+    }
+    column = table[columnType](field.fieldname);
 
     // primary key
     if (field.fieldname === 'name') {
@@ -132,11 +138,19 @@ module.exports = class Database extends Observable {
 
     // link
     if (field.fieldtype === 'Link' && field.target) {
+      console.log(`attempt to create foreign field ${field.fieldname} for table ${field.target}`)
       let meta = frappe.getMeta(field.target);
+      let baseDoctype = meta.getBaseDocType();
+
+      if (!(await this.tableExists(field.target))) {
+        console.log('creating table ', field.target); 
+        if(!meta.isSingle)
+        await this.createTable(baseDoctype);
+      }
       table
         .foreign(field.fieldname)
         .references('name')
-        .inTable(meta.getBaseDocType())
+        .inTable(baseDoctype)
         .onUpdate('CASCADE')
         .onDelete('RESTRICT');
     }
@@ -144,6 +158,7 @@ module.exports = class Database extends Observable {
 
   async getColumnDiff(doctype) {
     const tableColumns = await this.getTableColumns(doctype);
+    console.log("tableColumns", tableColumns); 
     const validFields = this.getValidFields(doctype);
     const diff = { added: [], removed: [] };
 
