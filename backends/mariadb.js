@@ -72,9 +72,7 @@ module.exports = class mariadbDatabase extends Database{
 
     async getTableColumns(doctype) {
         let result = await this.sql(`SHOW COLUMNS FROM ${doctype}`); 
-        console.log(result[0]); 
         let fields = result[0].map(d => d.Field)
-        console.log("fields", fields)
         return fields;
     }
 
@@ -143,12 +141,12 @@ module.exports = class mariadbDatabase extends Database{
         await this.sql("SET FOREIGN_KEY_CHECKS=1");
       }
     
-    async runDeleteOtherChildren(field, added) {
-        await this.run(`delete from ${field.childtype}
-            where
-                parent = ? and
-                name not in (${added.slice(1).map(d => '?').join(', ')})`, added);
-    }
+    // async runDeleteOtherChildren(field, added) {
+    //     await this.run(`delete from ${field.childtype}
+    //         where
+    //             parent = ? and
+    //             name not in (${added.slice(1).map(d => '?').join(', ')})`, added);
+    // }
 
     async deleteOne(doctype, name) {
         return await this.run(`delete from ${doctype} where name=?`, name);
