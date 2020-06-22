@@ -119,7 +119,9 @@ module.exports = class Database extends Observable {
     if (columnType === "image") {
       column = table.text(field.fieldname, 'longtext');
     }
-    column = table[columnType](field.fieldname);
+    else {
+      column = table[columnType](field.fieldname);
+    }
 
     // primary key
     if (field.fieldname === 'name') {
@@ -138,12 +140,10 @@ module.exports = class Database extends Observable {
 
     // link
     if (field.fieldtype === 'Link' && field.target) {
-      console.log(`attempt to create foreign field ${field.fieldname} for table ${field.target}`)
       let meta = frappe.getMeta(field.target);
       let baseDoctype = meta.getBaseDocType();
 
       if (!(await this.tableExists(field.target))) {
-        console.log('creating table ', field.target); 
         if(!meta.isSingle)
         await this.createTable(baseDoctype);
       }
