@@ -2,6 +2,7 @@
 module.exports = {
   staticPath: './static',
   distPath: './dist',
+  syncModel: true,
   dev: {
     entryHtml: 'index.html',
     srcDir: 'src',

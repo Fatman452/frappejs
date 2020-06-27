@@ -48,14 +48,14 @@ module.exports = class mariadbDatabase extends Database{
 
     // }
 
-    // async tableExists(table) {
+    async tableExists(table) {
 
-    //     const name = await this.sql(`SELECT table_name
-    //         FROM information_schema.tables
-    //         WHERE table_schema = '${this.db_name}'
-    //         AND table_name = '${table}'`);
-    //     return (name && name.length) ? true : false;
-    // }
+        const name = await this.sql(`SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = '${this.db_name}'
+            AND table_name = '${table}'`);
+        return (name && name.length) ? true : false;
+    }
 
     // async runCreateTableQuery(doctype, columns, values){
     //     console.log(columns);

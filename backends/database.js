@@ -2,6 +2,7 @@ const frappe = require('frappejs');
 const Observable = require('frappejs/utils/observable');
 const CacheManager = require('frappejs/utils/cacheManager');
 const Knex = require('knex');
+const { getAppConfig, resolveAppDir } = require('../webpack/utils').default;
 
 module.exports = class Database extends Observable {
   constructor() {
@@ -23,15 +24,18 @@ module.exports = class Database extends Observable {
   }
 
   async migrate() {
-    console.log('models', JSON.stringify(Object.keys(frappe.models))); 
     for (let doctype in frappe.models) {
       // check if controller module
+      let frappeConf = getAppConfig();
+
       let meta = frappe.getMeta(doctype);
       let baseDoctype = meta.getBaseDocType();
       if (!meta.isSingle) {
         if (await this.tableExists(baseDoctype)) {
-          // continue;
-          await this.alterTable(baseDoctype);
+          if (!frappeConf.syncModel) 
+            continue;
+          else
+            await this.alterTable(baseDoctype);
         } else {
           await this.createTable(baseDoctype);
         }
@@ -82,7 +86,7 @@ module.exports = class Database extends Observable {
   }
 
   async runCreateTableQuery(doctype, fields) {
-    return this.knex.schema.createTable(doctype, (table) => {
+    return this.knex.schema.createTable(doctype, table => {
       for (let field of fields) {
         this.buildColumnForTable(table, field);
       }
@@ -95,7 +99,7 @@ module.exports = class Database extends Observable {
     let newForeignKeys = await this.getNewForeignKeys(doctype);
 
     return this.knex.schema
-      .table(doctype, (table) => {
+      .table(doctype, table => {
         if (diff.added.length) {
           for (let field of diff.added) {
             this.buildColumnForTable(table, field);
@@ -115,11 +119,10 @@ module.exports = class Database extends Observable {
 
   async buildColumnForTable(table, field) {
     let columnType = this.getColumnType(field);
-    let column; 
-    if (columnType === "image") {
+    let column;
+    if (columnType === 'image') {
       column = table.text(field.fieldname, 'longtext');
-    }
-    else {
+    } else {
       column = table[columnType](field.fieldname);
     }
 
@@ -144,8 +147,7 @@ module.exports = class Database extends Observable {
       let baseDoctype = meta.getBaseDocType();
 
       if (!(await this.tableExists(field.target))) {
-        if(!meta.isSingle)
-        await this.createTable(baseDoctype);
+        if (!meta.isSingle) await this.createTable(baseDoctype);
       }
       table
         .foreign(field.fieldname)
@@ -158,7 +160,7 @@ module.exports = class Database extends Observable {
 
   async getColumnDiff(doctype) {
     const tableColumns = await this.getTableColumns(doctype);
-    console.log("tableColumns", tableColumns); 
+
     const validFields = this.getValidFields(doctype);
     const diff = { added: [], removed: [] };
 
