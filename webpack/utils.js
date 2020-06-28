@@ -24,7 +24,7 @@ function getAppDir() {
 
 function getAppConfig() {
   const defaults = {
-    syncModel: false, 
+    syncModel: true, 
     dev: {
       devServerHost: 'localhost',
       devServerPort: 8000
